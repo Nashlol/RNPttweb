@@ -3,7 +3,7 @@ import { Provider } from 'react-redux'
 import { createStore, applyMiddleware } from 'redux'
 import ReduxThunk from 'redux-thunk'
 import Router from './src/pages/router'
-import reducers from './src/components/loginReducers'
+import reducers from './src/reducers/reducers'
 
 export default class App extends React.Component {
   render() {

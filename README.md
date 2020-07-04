@@ -1,17 +1,16 @@
 # RNPttweb
-using react native expo build a Ptt app
-
+Using Expo build a React Native app for PTT
 
 [Click here to view the Expo Community Guidelines](https://expo.io/guidelines).
 
-// Setting up the development environment
+## Getting Started
 
-#npm install -g expo-cli
+1. Install Expo
+2. Build node_modules
+3. run the App
 
-// Build node_modules
-
-#npm install
-
-// run the App
-
-#npm start # you can also use: expo start
+```
+npm install -g expo-cli
+npm install
+npm start
+```

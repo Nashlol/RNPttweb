@@ -33,10 +33,10 @@ class RouterComponent extends Component {
       >
         <Scene key="root" headerLayoutPreset="center" hideNavBar={true}>
           <Scene
-            key="main"
+            key="home"
             tabs={true}
             tabBarPosition="bottom"
-            tabBarStyle={{ backgroundColor: '#00006d' }}
+            tabBarStyle={{ backgroundColor: '#b3b3b3' }}
             type={ActionConst.RESET}
           >
             <Scene

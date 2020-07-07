@@ -13,16 +13,19 @@ class HotBoard extends Component {
   }
 
   componentDidMount() {
-      this.getPttHotBoardList()
+    console.log('hotBoard did mount')
+    this.getPttHotBoardList()
   }
 
   async getPttHotBoardList() {
     try {
       var data = []
-      const response = await fetch('https://www.ptt.cc/bbs/index.html');
+      const response = await fetch('http://www.ptt.cc/bbs/index.html',);
       const html = await response.text();
+      // console.log('html : ' + html)
       const parser = new DOMParser.DOMParser();
       const parsed = parser.parseFromString(html, 'text/html');
+      // console.log('parsed= ' + parsed)
       const boardList = parsed.getElementsByClassName('b-ent');
       // console.log("boardList length: " + boardList.length);
       for (var i = 0; i < boardList.length; i++) {

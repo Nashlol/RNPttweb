@@ -9,8 +9,7 @@ import {
   Button,
   Modal,
   TouchableHighlight,
-  TextInput
-} from 'react-native'
+  TextInput } from 'react-native'
 import { Actions } from 'react-native-router-flux'
 import { Spinner } from '../components/spinner'
 import DOMParser from 'react-native-html-parser';
@@ -25,7 +24,7 @@ class BoardList extends PureComponent {
     articleNumArray: [],
     recLargeNum: {},
     reading: false,
-    requestOptions: {},
+    requestOptions: this.props.data.requestOptions ? this.props.data.requestOptions : {},
     nextPagePath: '',
     searchFunction: '',
     searchTitle: '搜尋標題',
@@ -50,7 +49,7 @@ class BoardList extends PureComponent {
 
   getNextPages(nextPagePath) {
     var nextPage;
-    console.log(nextPagePath.getElementsByClassName('btn wide')[1].textContent)
+    // console.log(nextPagePath.getElementsByClassName('btn wide')[1].textContent)
     if (nextPagePath.getElementsByClassName('btn wide')[1].textContent != '‹ 上頁') {
       nextPage = ''
     } else {
@@ -75,7 +74,7 @@ class BoardList extends PureComponent {
       const parser = new DOMParser.DOMParser();
       const parsed = parser.parseFromString(html, 'text/html');
       // console.log('headers: ' + JSON.stringify(response.headers))
-      // console.log('parsed html: ' + parsed.toString);
+      // console.log('parsed html: ' + parsed.toString());
       if (parsed.getElementsByClassName('over18-button-container').length) {
         // console.log(parsed.toString());
         Alert.alert(
@@ -184,12 +183,13 @@ class BoardList extends PureComponent {
   }
 
   onSearch() {
-    // console.log('Search:' + this.props.data.boardName);
+    console.log('Search:' + JSON.stringify(this.state.requestOptions));
     if (this.state.searchBarText != '') {
       this.setModalVisible(false);
       Actions.childboard({
         data: {
-          boardName: this.props.data.boardName,
+          boardName: this.props.data.boardName + ' : ' + this.state.searchBarText,
+          requestOptions: this.state.requestOptions,
           path:'/bbs/' + this.props.data.boardName + '/search?q=' + this.state.searchFunction + this.state.searchBarText
         }
       })

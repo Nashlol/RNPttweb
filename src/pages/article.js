@@ -4,9 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  FlatList,
-  SectionList,
-} from 'react-native'
+  FlatList } from 'react-native'
 import TitleData from '../components/titleData'
 import DOMParser from 'react-native-html-parser';
 
@@ -109,7 +107,7 @@ class Article extends PureComponent {
     const comments = ArticleDetail[0].getElementsByClassName('push');
     var comment = [];
     var commentDetail = {};
-    console.log('comments length: ' + comments.length)
+    // console.log('comments length: ' + comments.length)
     var length = comments.length > 50 ? 50 : comments.length
     for (var i = 0; i < length; i++) {
       var pushtag;
@@ -124,7 +122,7 @@ class Article extends PureComponent {
       commentDetail = { pushtag, userid, content, time }
       comment = comment.concat(commentDetail);
     }
-    console.log('comment length: ' + comment.length)
+    // console.log('comment length: ' + comment.length)
 
     this.setState({
       comment
@@ -144,7 +142,11 @@ class Article extends PureComponent {
           <Text style={styles.commentTime}>{time}</Text>
         </View>
         <View style={styles.commentContent}>
-          <Text style={styles.commentTag}>{tag}</Text>
+          { tag.startsWith('噓') ? (
+            <Text style={styles.commentTag}>{tag}</Text>
+          ) : (
+            <Text style={styles.commentTagPush}>{tag}</Text>
+          )}
           <Text style={styles.commentText}>{content}</Text>
         </View>
       </View>
@@ -210,7 +212,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   commentTag: {
-    color: '#0b0bff',
+    color: '#ff0b0b',
+    fontSize: 16,
+  },
+  commentTagPush: {
+    color: '#ffff0b',
     fontSize: 16,
   },
   commentText: {

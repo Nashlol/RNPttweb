@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 
 class tabIcon extends Component {
   render() {
-    var color = this.props.focused ? '#3e92cf' : '#6577cc'
+    var color = this.props.focused ? '#00006d' : '#343434'
     return (
       <View
         style={{

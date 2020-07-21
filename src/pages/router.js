@@ -1,11 +1,13 @@
 import React, { Component } from 'react'
 import { Scene, Router, Actions, ActionConst } from 'react-native-router-flux'
-import tabIcon from '../utils/tabIcon'
+import tabIcon from '../components/tabIcon'
 import BoardClass from './boardClass'
 import HotBoard from './hotBoard'
+import Favorite from './favorite'
 import BoardList from './boardList'
 import Article from './article'
 import detailNavBar from '../components/detailNavBar'
+import { getFB } from '../utils/storage'
 
 class RouterComponent extends Component {
 
@@ -42,14 +44,47 @@ class RouterComponent extends Component {
             <Scene
               key="HotBoard"
               component={HotBoard}
+              onEnter={() => {
+                this.recPage = Actions.currentScene
+                console.log('onEnter ' + this.recPage)
+              }}
+              onExit={() => {
+                console.log('onExit ' + this.recPage)
+              }}
               title="熱門看板"
               titleStyle={{ color: '#ffff0b' }}
               icon={tabIcon}
               iconName={'fire'}
             />
             <Scene
+              key="Favorite"
+              component={Favorite}
+              initial={true}
+              onEnter={() => {
+                this.recPage = Actions.currentScene
+                console.log('onEnter ' + this.recPage)
+                setTimeout(() => {
+                  Actions.refresh()
+                }, 0.1)
+              }}
+              onExit={() => {
+                console.log('onExit ' + this.recPage)
+              }}
+              title="我的最愛"
+              titleStyle={{ color: '#ffff0b' }}
+              icon={tabIcon}
+              iconName={'heart'}
+            />
+            <Scene
               key="Class"
               component={BoardClass}
+              onEnter={() => {
+                this.recPage = Actions.currentScene
+                console.log('onEnter ' + this.recPage)
+              }}
+              onExit={() => {
+                console.log('onExit ' + this.recPage)
+              }}
               title="分類看板"
               titleStyle={{ color: '#ffff0b' }}
               icon={tabIcon}

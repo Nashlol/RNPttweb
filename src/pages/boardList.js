@@ -12,7 +12,8 @@ import {
   TextInput } from 'react-native'
 import { Actions } from 'react-native-router-flux'
 import { Spinner } from '../components/spinner'
-import DOMParser from 'react-native-html-parser';
+import TabIcon from '../components/tabIcon'
+import htmlParser from '../utils/htmlParser'
 
 class BoardList extends PureComponent {
   _isMounted = false
@@ -69,10 +70,11 @@ class BoardList extends PureComponent {
     try {
       var data = [];
       console.log('requestOptions: ' + JSON.stringify(this.state.requestOptions))
+      console.log('boardPath : ' + boardPath)
+      console.log('refresh :' + refresh )
       const response = await fetch('https://www.ptt.cc' + boardPath, this.state.requestOptions);
       const html = await response.text();
-      const parser = new DOMParser.DOMParser();
-      const parsed = parser.parseFromString(html, 'text/html');
+      const parsed = htmlParser(html);
       // console.log('headers: ' + JSON.stringify(response.headers))
       // console.log('parsed html: ' + parsed.toString());
       if (parsed.getElementsByClassName('over18-button-container').length) {
@@ -111,19 +113,31 @@ class BoardList extends PureComponent {
         const boardList = parsed.getElementsByClassName('r-ent');
         var num = this.state.data.length;
         console.log("boardList length: " + boardList.length);
-        for (var i = boardList.length -1; i > -1; i--) {
-          // console.log('boardList = ' + boardList[i])
-          const itemDetail = this.rowDetail(boardList[i], num);
-          // console.log('itemDetail = ' + itemDetail)
-           
-          data = data.concat(itemDetail);
-          num++;
+        if (boardPath.includes('search')) {
+          for (var i = 0; i < boardList.length; i++) {
+            // console.log('boardList = ' + boardList[i])
+            const itemDetail = this.rowDetail(boardList[i], num);
+            // console.log('itemDetail = ' + itemDetail)
+             
+            data = data.concat(itemDetail);
+            num++;
+          }
+        } else {
+          for (var i = boardList.length -1; i > -1; i--) {
+            // console.log('boardList = ' + boardList[i])
+            const itemDetail = this.rowDetail(boardList[i], num);
+            // console.log('itemDetail = ' + itemDetail)
+             
+            data = data.concat(itemDetail);
+            num++;
+          }
         }
+        
         const nextPageDetial = parsed.getElementsByClassName('btn-group btn-group-paging')[0];
         this.getNextPages(nextPageDetial);
         if (refresh) {
           this.setState({
-            data,
+            data: data,
             loading: true
           })
         } else {
@@ -215,6 +229,14 @@ class BoardList extends PureComponent {
     this.setState({ modalVisible })
   }
 
+  onRefresh() {
+    console.log('onRefresh')
+    this.setState({
+      data: []
+    })
+    this.getBoardList(this.props.data.path)
+  }
+
   renderRow({ item }) {
     var text = item.row.title;
     var nuser = item.row.popularity;
@@ -255,18 +277,28 @@ class BoardList extends PureComponent {
           onEndReached={this.loadNextPage.bind(this)}
           onEndReachedThreshold={0.5}
         />
-        <Button style={styles.searchButton}
-          onPress={this.setModalVisible.bind(this, true)}
-          title="Search"
-          color="#841584"
-        />
+        <View style={styles.bottomBar}>
+          <TouchableHighlight
+            style={styles.bottomBarButton}
+            onPress={() => {
+              this.setModalVisible(true);
+            }}
+          >
+            <TabIcon iconName={'comment-search-outline'}></TabIcon>
+          </TouchableHighlight>
+          <TouchableHighlight
+            style={styles.bottomBarButton}
+            onPress={() => {
+              this.onRefresh();
+            }}
+          >
+            <TabIcon iconName={'refresh'}></TabIcon>
+          </TouchableHighlight>
+        </View>
         <Modal
           animationType="slide"
           transparent={true}
           visible={this.state.modalVisible}
-          onRequestClose={() => {
-            Alert.alert("Modal has been closed.");
-          }}
         >
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
@@ -355,12 +387,22 @@ const styles = StyleSheet.create({
   date: {
     color : '#999999'
   },
-  searchFunction: {
+  bottomBar:{
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: "center",
+    backgroundColor: "#b3b3b3",
   },
-  searchButton: {
-    color: "#841584",
-    backgroundColor: '#000000',
+  bottomBarButton: {
+    marginVertical: 5,
+    height: 35,
+    width: 35,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22
   },
   modalView: {
     margin: 20,
@@ -376,6 +418,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5
+  },
+  searchFunction: {
+    flexDirection: 'row',
   },
   searchBar: {
     height: 30,

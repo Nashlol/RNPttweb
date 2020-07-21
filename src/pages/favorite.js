@@ -1,16 +1,15 @@
 import React, { Component } from 'react';
 import {
+  Alert,
   TouchableOpacity,
   View,
   FlatList,
   StyleSheet,
-  Text,
-  Alert} from 'react-native'
-import htmlParser from '../utils/htmlParser'
+  Text } from 'react-native'
 import { Actions } from 'react-native-router-flux'
-import { AddFB } from '../utils/storage';
+import { removeFB, getFB, clearAll } from '../utils/storage'
 
-class HotBoard extends Component {
+class Favorite extends Component {
   state = {
     loading: false,
     data: [],
@@ -20,26 +19,74 @@ class HotBoard extends Component {
   }
 
   componentDidMount() {
-    console.log('hotBoard did mount')
-    this.getPttHotBoardList()
+    // clearAll()
+    if (this.props.data) {
+      this.getFavoriteBoardList(this.props.data)
+    } else {
+      this.getFBListFromStorage()
+    }
   }
 
-  async getPttHotBoardList() {
+  componentDidUpdate() {
+    console.log('componentDidUpdate')
+    getFB(
+      (result) => {
+        if (result !== null) {
+          var boardList = JSON.parse(result)
+          if (!boardList.board.length) {
+            this.FBNullAlart()
+          } else if ( boardList.board.length != this.state.data.length) {
+            this.getFavoriteBoardList(boardList)
+          }
+        }
+      }
+    )
+  }
+
+  getFBListFromStorage() {
+    getFB(
+      (result) => {
+        if (result !== null) {
+          console.log('FB data: ' + result)
+          var boardList = JSON.parse(result)
+          if (boardList.board.length) {
+            this.getFavoriteBoardList(boardList)
+          } else {
+            this.FBNullAlart()
+          }
+        }
+      }
+    )
+  }
+
+  FBNullAlart() {
+    Alert.alert(
+      "前往熱門看板",
+      '長按喜愛的看板加入我的最愛',
+      [
+        {
+          text: "確認",
+          onPress: () => {
+            console.log("OK Pressed");
+            Actions.HotBoard()
+          }
+        },
+      ],
+      { cancelable: false }
+    );
+  }
+
+  getFavoriteBoardList(boardList) {  
     try {
       var data = []
-      const response = await fetch('http://www.ptt.cc/bbs/index.html',);
-      const html = await response.text();
-      // console.log('html : ' + html)
-      const parsed = htmlParser(html);
-      // console.log('parsed= ' + parsed)
-      const boardList = parsed.getElementsByClassName('b-ent');
-      // console.log("boardList length: " + boardList.length);
-      for (var i = 0; i < boardList.length; i++) {
-        // console.log('boardList = ' + boardList[i])
-        const itemDetail = this.rowDetail(boardList[i], i);
-        // console.log('itemDetail = ' + itemDetail)
+      for (var i = 0; i < boardList.board.length; i++) {
+        if (boardList.board[i] !== null) {
+          // console.log('boardList = ' + boardList[i])
+          const itemDetail = this.rowDetail(boardList.board[i], i);
+          // console.log('itemDetail = ' + itemDetail)
          
-        data = data.concat(itemDetail);
+          data = data.concat(itemDetail);
+        }
       }
       this.setState({
         data
@@ -53,19 +100,15 @@ class HotBoard extends Component {
   rowDetail(itemDetail, num) {
     // console.log('rowDetail itemDetail = ' + itemDetail)
     // console.log('rowDetail num = ' + num)
-    const category = itemDetail.getElementsByClassName('class');
-    const boardName = itemDetail.getElementsByClassName('board-name')[0].textContent;
-    const narration = itemDetail.getElementsByClassName('board-title')[0].textContent;
-    const popularity = itemDetail.getElementsByClassName('board-nuser')[0].textContent;
-    const path = itemDetail.getElementsByClassName('board')[0].getAttribute("href");
+    const boardName = itemDetail.boardName;
+    const narration = itemDetail.narration;
+    const path = itemDetail.path;
     // console.log('rowDetail path: ' + path)
 
     return {
       row: {
         boardName,
-        category,
         narration,
-        popularity,
         path
       },
       key: num
@@ -75,7 +118,7 @@ class HotBoard extends Component {
   handlerLongClick = ({ item }) => {
     //handler for Long Click
     Alert.alert(
-      "加入我的最愛",
+      "確認刪除",
       '',
       [
         {
@@ -85,19 +128,27 @@ class HotBoard extends Component {
           },
           style: "cancel"
         },
-        { text: "加入",
+        { text: "刪除",
           onPress: () => {
             console.log("OK Pressed")
-            AddFB({item})
+            removeFB({item}, () => {
+              this.setState({data:[]})
+              this.getFBListFromStorage()
+            })
           }
         }
       ],
       { cancelable: false }
     );
-  }
+  };
 
   _onPressItem({ item }) {
-    Actions.childboard({ data: item.row })
+    console.log('boardClass press item path: ' + item.row.boardName)
+    if (item.row.path.startsWith('/bbs')) {
+      Actions.childboard({ data: item.row })
+    } else {
+      Actions.classboard({ data: item.row })
+    }
   }
 
   renderRow = ({ item }) => {
@@ -157,4 +208,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export default HotBoard
+export default Favorite

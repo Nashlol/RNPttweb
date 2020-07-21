@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { TouchableOpacity, View, FlatList, StyleSheet, Text } from 'react-native'
-import DOMParser from 'react-native-html-parser';
+import htmlParser from '../utils/htmlParser'
 import { Actions } from 'react-native-router-flux'
 
 class BoardClass extends Component {
@@ -26,8 +26,7 @@ class BoardClass extends Component {
       var data = []
       const response = await fetch('https://www.ptt.cc' + path);
       const html = await response.text();
-      const parser = new DOMParser.DOMParser();
-      const parsed = parser.parseFromString(html, 'text/html');
+      const parsed = htmlParser(html);
       const boardList = parsed.getElementsByClassName('b-ent');
       // console.log("boardList length: " + boardList.length);
       for (var i = 0; i < boardList.length; i++) {

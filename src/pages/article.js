@@ -4,9 +4,15 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  FlatList } from 'react-native'
+  FlatList,
+  Linking,
+  Share,
+  TouchableHighlight,
+  Dimensions } from 'react-native'
+import HTMLView from 'react-native-render-html';
 import TitleData from '../components/titleData'
-import DOMParser from 'react-native-html-parser';
+import htmlParser from '../utils/htmlParser'
+import TabIcon from '../components/tabIcon'
 
 class Article extends PureComponent {
   _isMounted = false
@@ -20,6 +26,9 @@ class Article extends PureComponent {
     pagePercent: 0,
     data: [],
     recData: [],
+    path: '',
+    content: '',
+    comment: [],
     commentIndex: 1,
   }
 
@@ -40,6 +49,7 @@ class Article extends PureComponent {
     // console.log('split1 = ' + split1[1]);
     var split2 = split1[1].split("\"");
     // console.log('path = ' + split2[1]);
+    this.setState({path: 'https://www.ptt.cc' + split2[1]})
     return split2[1];
   }
 
@@ -57,8 +67,7 @@ class Article extends PureComponent {
       // var data = [];
       const response = await fetch('https://www.ptt.cc' + articlePath, requestOption);
       const html = await response.text();
-      const parser = new DOMParser.DOMParser();
-      const parsed = parser.parseFromString(html, 'text/html');
+      const parsed = htmlParser(html);
       // console.log('ArticleDetail: ' + parsed);
       const navBarDetail = parsed.getElementsByClassName('article-meta-value');
       this.getNavBarDetail(navBarDetail);
@@ -89,17 +98,16 @@ class Article extends PureComponent {
   getArticleContent(ArticleDetail) {
     var contentSplit;
     var content;
+    // console.log('getArticleContent ArticleDetail : ' + ArticleDetail)
     if (Object.keys(this.state.navData).length > 0) {
-      contentSplit = ArticleDetail[0].textContent.split(this.state.navData.time);
-      content = contentSplit[1].split('※ 發信站');
-      // console.log("ArticleDetail : " + content[0]);
+      contentSplit = ArticleDetail.toString().split(this.state.navData.time + '</span></div>');
+      content = contentSplit[1].split('<span class="f2">※ 發信站');
     } else {
-      // contentSplit = ArticleDetail[0].textContent.split(this.state.navData.time);
-      content = ArticleDetail[0].textContent.split('※ 發信站');
+      content = ArticleDetail.toString().split('<span class="f2">※ 發信站');
     }
     
     this.setState({
-      content: content[0]
+      content: '<div>' + content[0].replace(/\n/g, '<br/>') + '</div>'
     })
   }
 
@@ -108,7 +116,7 @@ class Article extends PureComponent {
     var comment = [];
     var commentDetail = {};
     // console.log('comments length: ' + comments.length)
-    var length = comments.length > 50 ? 50 : comments.length
+    var length = comments.length > 99 ? 99 : comments.length
     for (var i = 0; i < length; i++) {
       var pushtag;
       if (comments[i].getElementsByClassName('hl push-tag').length)
@@ -118,8 +126,9 @@ class Article extends PureComponent {
       var userid = comments[i].getElementsByClassName('f3 hl push-userid')[0].textContent;
       var content = comments[i].getElementsByClassName('f3 push-content')[0].textContent;
       var time = comments[i].getElementsByClassName('push-ipdatetime')[0].textContent;
+      var key = i;
 
-      commentDetail = { pushtag, userid, content, time }
+      commentDetail = { pushtag, userid, content, time, key }
       comment = comment.concat(commentDetail);
     }
     // console.log('comment length: ' + comment.length)
@@ -127,6 +136,41 @@ class Article extends PureComponent {
     this.setState({
       comment
     })
+  }
+
+  onBottom() {
+    console.log('onBottom')
+    this.scrollView.scrollToEnd({duration: 500, animated: true})
+  }
+
+  onRefresh() {
+    console.log('onRefresh')
+    this.setState({
+      comment: []
+    })
+    const aritclePath = this.getArticlePath(this.props.data.path);
+    this.getArticleDetail(aritclePath);
+  }
+
+  onShare = async () => {
+    try {
+      const result = await Share.share({
+        title: this.state.navData.title,
+        url: this.state.path,
+        message: this.state.navData.title + '\n' + this.state.path
+      });
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // shared with activity type of result.activityType
+        } else {
+          // shared
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // dismissed
+      }
+    } catch (error) {
+      alert(error.message);
+    }
   }
 
   renderComment = ({ item }) => {
@@ -154,35 +198,76 @@ class Article extends PureComponent {
   }
 
   render() {
-    var content = this.state.content;
+    // var content = this.state.content;
+    // console.log('render content: ' + content)
     return (
-      <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.container}>
         {Object.keys(this.state.navData).length > 0 ? (
           <TitleData
             articleDetail={this.state.navData}
           />
         ) : null}
-        <Text style={styles.content}>
-          {content}
-        </Text>
-        <FlatList
-          data={this.state.comment}
-          showsVerticalScrollIndicator={false}
-          renderItem={this.renderComment.bind(this)}
-          initialNumToRender={99}
-        />
-      </ScrollView>
+        <ScrollView 
+          ref={(scrollView) => { this.scrollView = scrollView }}
+          contentContainerStyle={styles.ScrollContainer}>
+          <HTMLView 
+            html={this.state.content}
+            classesStyles={htmlClass}
+            tagsStyles={htmlTags}
+            imagesMaxWidth={Dimensions.get('window').width}
+            textSelectabl={true}
+            emSize={14}
+            onLinkPress={(evt, href) => { Linking.openURL(href) }}
+          />
+          <FlatList
+            data={this.state.comment}
+            showsVerticalScrollIndicator={false}
+            renderItem={this.renderComment.bind(this)}
+            keyExtractor={item => item.key.toString()}
+            initialNumToRender={99}
+          />
+        </ScrollView>
+        <View style={styles.bottomBar}>
+          <TouchableHighlight
+            style={styles.bottomBarButton}
+            onPress={() => {
+              this.onShare();
+            }}
+          >
+            <TabIcon iconName={'share'}></TabIcon>
+          </TouchableHighlight>
+          <TouchableHighlight
+            style={styles.bottomBarButton}
+            onPress={() => {
+              this.onRefresh();
+            }}
+          >
+            <TabIcon iconName={'refresh'}></TabIcon>
+          </TouchableHighlight>
+          <TouchableHighlight
+            style={styles.bottomBarButton}
+            onPress={() => {
+              this.onBottom();
+            }}
+          >
+            <TabIcon iconName={'format-vertical-align-bottom'}></TabIcon>
+          </TouchableHighlight>
+        </View>
+      </View>
     )
   }
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  ScrollContainer: {
     flexGrow: 1,
     backgroundColor: '#000000',
   },
   content: {
-    backgroundColor: '#000000',
     color: '#b3b3b3',
     fontSize: 20,
   },
@@ -222,6 +307,45 @@ const styles = StyleSheet.create({
   commentText: {
     color: '#000000',
     fontSize: 16,
+  },
+  bottomBar:{
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: "center",
+    backgroundColor: "#b3b3b3",
+  },
+  bottomBarButton: {
+    marginVertical: 5,
+    height: 35,
+    width: 35,
+  }
+})
+
+const htmlClass = StyleSheet.create({
+  hl: {
+    fontSize: 20,
+  },
+  f1: {
+    fontSize: 20,
+    color: '#b30606'
+  },
+  f2: {
+    fontSize: 20,
+    color: '#06b306'
+  },
+  f3: {
+    fontSize: 20,
+    color: '#b3b306'
+  }
+})
+
+const htmlTags = StyleSheet.create({
+  div: {
+    fontSize: 20,
+    color: '#b3b3b3'
+  },
+  a: {
+    fontSize: 20
   }
 })
 

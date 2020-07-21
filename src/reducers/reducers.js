@@ -1,13 +1,6 @@
 
 const INITAL_STATE = {
-  account: '',
-  password: '',
-  error: '',
-  loadingEnd: false,
-  loginSuccess: false,
-  loginFaild: false,
-  guestLoginFaild: false,
-  loginRepeat: false,
+  favorite: []
 }
 
 export default (state = INITAL_STATE) => {

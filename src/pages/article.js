@@ -174,7 +174,7 @@ class Article extends PureComponent {
   }
 
   renderComment = ({ item }) => {
-    // console.log('renderRow item: ' + item);
+    // console.log('renderComment item: ' + JSON.stringify(item));
     var tag = item.pushtag;
     var userid = item.userid;
     var content = item.content;
@@ -336,6 +336,10 @@ const htmlClass = StyleSheet.create({
   f3: {
     fontSize: 20,
     color: '#b3b306'
+  },
+  f6: {
+    fontSize: 20,
+    color: '#118987'
   }
 })
 
